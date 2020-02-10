@@ -50,6 +50,7 @@ public class GroupMessengerProvider extends ContentProvider {
          * internal storage option that we used in PA1. If you want to use that option, please
          * take a look at the code for PA1.
          */
+        //blah blah blah
         Log.v("insert", values.toString());
         return uri;
     }
