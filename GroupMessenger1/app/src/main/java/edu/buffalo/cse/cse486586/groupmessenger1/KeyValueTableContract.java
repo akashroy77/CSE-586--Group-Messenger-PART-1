@@ -17,4 +17,5 @@ public final class KeyValueTableContract {
         public static final String COLUMN_NAME_VALUE = "value";
     }
 
+
 }

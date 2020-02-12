@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class KeyValueTableDBHelper extends SQLiteOpenHelper {
     private static final String SQL_CREATE_ENTRIES =
             "CREATE TABLE " + KeyValueTableContract.KeyValueTableEntry.TABLE_NAME + " ("+
-                    KeyValueTableContract.KeyValueTableEntry.COLUMN_NAME_KEY + " TEXT," +
+                    KeyValueTableContract.KeyValueTableEntry.COLUMN_NAME_KEY + " TEXT PRIMARY KEY," +
                     KeyValueTableContract.KeyValueTableEntry.COLUMN_NAME_VALUE + " TEXT)";
 
     private static final String SQL_DELETE_ENTRIES =
@@ -17,7 +17,7 @@ public class KeyValueTableDBHelper extends SQLiteOpenHelper {
 
     // If you change the database schema, you must increment the database version.
     public static final int DATABASE_VERSION = 1;
-    public static final String DATABASE_NAME = "FeedReader.db";
+    public static final String DATABASE_NAME = "KeyValueStorage.db";
 
     public KeyValueTableDBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);

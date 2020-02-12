@@ -3,6 +3,8 @@ package edu.buffalo.cse.cse486586.groupmessenger1;
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.util.Log;
 
@@ -26,6 +28,8 @@ import android.util.Log;
  */
 public class GroupMessengerProvider extends ContentProvider {
 
+    //instantiating your subclass of SQLiteOpenHelper:
+    KeyValueTableDBHelper dbHelper;
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
         // You do not need to implement this.
@@ -50,9 +54,17 @@ public class GroupMessengerProvider extends ContentProvider {
          * internal storage option that we used in PA1. If you want to use that option, please
          * take a look at the code for PA1.
          */
+        Log.d("insert","db created");
+        // Gets the data repository in write mode
+        dbHelper = new KeyValueTableDBHelper(getContext());
 
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        Log.d("insert","db created 1");
+        //https://stackoverflow.com/questions/13311727/android-sqlite-insert-or-update
+        // Insert the new row, returning the primary key value of the new row
+        long newRowId = db.insertWithOnConflict(KeyValueTableContract.KeyValueTableEntry.TABLE_NAME, null, values,SQLiteDatabase.CONFLICT_IGNORE);
 
-        Log.v("insert", values.toString());
+        Log.d("insert", values.toString());
         return uri;
     }
 
@@ -82,7 +94,26 @@ public class GroupMessengerProvider extends ContentProvider {
          * recommend building a MatrixCursor described at:
          * http://developer.android.com/reference/android/database/MatrixCursor.html
          */
-        Log.v("query", selection);
-        return null;
+        Log.d("query", selection);
+
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+
+
+        Cursor cursor = db.query(
+                KeyValueTableContract.KeyValueTableEntry.TABLE_NAME,   // The table to query
+                null,             // The array of columns to return (pass null to get all)
+                "key=?",              // The columns for the WHERE clause
+                new String[]{selection},          // The values for the WHERE clause
+                null,                   // don't group the rows
+                null,                   // don't filter by row groups
+                sortOrder               // The sort order
+        );
+
+
+        Log.d("query", DatabaseUtils.dumpCursorToString(cursor));
+
+
+        return cursor;
     }
 }
