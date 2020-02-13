@@ -1,12 +1,12 @@
 package edu.buffalo.cse.cse486586.groupmessenger1;
 
 import android.app.Activity;
-import android.content.Context;
+import android.content.ContentValues;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
 import android.widget.EditText;
@@ -15,7 +15,6 @@ import android.widget.Toast;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -26,17 +25,32 @@ import static android.content.ContentValues.TAG;
 
 /**
  * GroupMessengerActivity is the main Activity for the assignment.
- * 
+ * import android.os.Bundle;
  * @author stevko
  *
  */
 public class GroupMessengerActivity extends Activity {
-
+    static final int SERVER_PORT=10000;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group_messenger);
-
+        try {
+            /*
+             * Create a server socket as well as a thread (AsyncTask) that listens on the server
+             * port.
+             *
+             * AsyncTask is a simplified thread construct that Android provides. Please make sure
+             * you know how it works by reading
+             * http://developer.android.com/reference/android/os/AsyncTask.html
+             */
+            Log.d("ServerSocket","Creating a Server Socket");
+            ServerSocket serverSocket = new ServerSocket(SERVER_PORT);
+            new ServerTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, serverSocket);
+        } catch (IOException e) {
+            Log.e(TAG, "Can't create a ServerSocket");
+            return;
+        }
         /*
          * TODO: Use the TextView to display your messages. Though there is no grading component
          * on how you display the messages, if you implement it, it'll make your debugging easier.
@@ -69,7 +83,7 @@ public class GroupMessengerActivity extends Activity {
                     TextView localTextView = (TextView) findViewById(R.id.textView1);
                     localTextView.append("\t" + msg); // This is one way to display a string.
 
-                       new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, msg);
+                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, msg);
 
             }
         });
@@ -82,25 +96,44 @@ public class GroupMessengerActivity extends Activity {
         getMenuInflater().inflate(R.menu.activity_group_messenger, menu);
         return true;
     }
+
     /***
      * ServerTask is an AsyncTask that should handle incoming messages. It is created by
      * ServerTask.executeOnExecutor() call in SimpleMessengerActivity.
-     *
-     * Please make sure you understand how AsyncTask works by reading
-     * http://developer.android.com/reference/android/os/AsyncTask.html
-     *
-     * @author stevko
-     *
      */
-    private class ServerTask extends AsyncTask<ServerSocket, String, Void> {
 
+    private class ServerTask extends AsyncTask<ServerSocket, String, Void> {
+        int sequence_number=0;
+        Uri providerUri= Uri.parse("content://edu.buffalo.cse.cse486586.groupmessenger1.provider");
         @Override
         protected Void doInBackground(ServerSocket... sockets) {
+
             ServerSocket serverSocket = sockets[0];
 
+            try {
+                while (true) {
+                    Socket socket = serverSocket.accept();
+                    Log.d("Server:", "Connection Successfull");
+
+                    DataInputStream inputStream = new DataInputStream(socket.getInputStream());
+                    String inputString = inputStream.readUTF();
+                    Log.d("Server:", "Received String");
+                    Log.d("Server", "Sending the Message to OnProgressUpdate");
+                    publishProgress(inputString);
+                    Log.d("Server", "Creating a dummy output stream so handshake will be complete and we can close the socket");
+                    DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+                    outputStream.writeUTF("Acknowledgement");
+                    socket.close();
+                }
+            }
+            catch (Exception ex)
+            {
+                ex.getMessage();
+            }
 
 
             return null;
+
         }
 
         protected void onProgressUpdate(String...strings) {
@@ -113,24 +146,17 @@ public class GroupMessengerActivity extends Activity {
             TextView localTextView = (TextView) findViewById(R.id.textView1);
             localTextView.append("\n");
 
-            /*
-             * The following code creates a file in the AVD's internal storage and stores a file.
-             *
-             * For more information on file I/O on Android, please take a look at
-             * http://developer.android.com/training/basics/data-storage/files.html
-             */
+            //Storing Value to the Database Using Content Provider
+            ContentValues keyValueToInsert = new ContentValues();
 
-            String filename = "SimpleMessengerOutput";
-            String string = strReceived + "\n";
-            FileOutputStream outputStream;
+            // inserting <”key-to-insert”, “value-to-insert”>
+            keyValueToInsert.put("key",this.sequence_number++);
+            keyValueToInsert.put("value",strReceived);
 
-            try {
-                outputStream = openFileOutput(filename, Context.MODE_PRIVATE);
-                outputStream.write(string.getBytes());
-                outputStream.close();
-            } catch (Exception e) {
-                Log.e(TAG, "File write failed");
-            }
+            Uri newUri = getContentResolver().insert(
+                    providerUri,
+                    keyValueToInsert
+            );
 
             return;
         }
@@ -151,21 +177,21 @@ public class GroupMessengerActivity extends Activity {
                 Socket socket=null;
                 String remotePorts[] = new String[]{"11108", "11112", "11116", "11120", "11124"};
 
-                for(String port:remotePorts)
-                {
+                for(String port:remotePorts) {
                     socket = new Socket(InetAddress.getByAddress(new byte[]{10, 0, 2, 2}),
                             Integer.parseInt(port));
-                }
 
-                String msgToSend = msgs[0];
-                DataOutputStream outputStream=new DataOutputStream(socket.getOutputStream());
-                Log.d("Client","Message to be Sent"+msgToSend);
-                outputStream.writeUTF(msgToSend);
-                Log.d("Client","Message Sent");
-                Log.d("Server","Creating a dummy output stream so handshake will be complete and we can close the socket");
-                DataInputStream inputStream=new DataInputStream(socket.getInputStream());
-                String dummyString=inputStream.readUTF();
-                socket.close();
+
+                    String msgToSend = msgs[0];
+                    DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+                    Log.d("Client", "Message to be Sent" + msgToSend);
+                    outputStream.writeUTF(msgToSend);
+                    Log.d("Client", "Message Sent");
+                    Log.d("Server", "Creating a dummy output stream so handshake will be complete and we can close the socket");
+                    DataInputStream inputStream = new DataInputStream(socket.getInputStream());
+                    String dummyString = inputStream.readUTF();
+                    socket.close();
+                }
 
             } catch (UnknownHostException e) {
                 Log.e(TAG, "ClientTask UnknownHostException");
