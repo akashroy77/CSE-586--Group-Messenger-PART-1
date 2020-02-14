@@ -12,11 +12,12 @@ public class KeyValueTableDBHelper extends SQLiteOpenHelper {
                     KeyValueTableContract.KeyValueTableEntry.COLUMN_NAME_KEY + " TEXT PRIMARY KEY," +
                     KeyValueTableContract.KeyValueTableEntry.COLUMN_NAME_VALUE + " TEXT)";
 
+
     private static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + KeyValueTableContract.KeyValueTableEntry.TABLE_NAME;
 
     // If you change the database schema, you must increment the database version.
-    public static final int DATABASE_VERSION = 3;
+    public static final int DATABASE_VERSION = 1;
     public static final String DATABASE_NAME = "KeyValueStorage.db";
 
     public KeyValueTableDBHelper(Context context) {
