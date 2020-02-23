@@ -70,11 +70,10 @@ public class GroupMessengerActivity extends Activity {
          * In your implementation you need to get the message from the input box (EditText)
          * and send it to other AVDs.
          */
-
+        //https://developer.android.com/reference/android/widget/Button
         findViewById(R.id.button4).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                               Toast.makeText(getApplicationContext(), "Clicked", Toast.LENGTH_SHORT).show();
                 final EditText editText = (EditText) findViewById(R.id.editText1);
 
                     String msg = editText.getText().toString() + "\n";

@@ -28,8 +28,10 @@ import android.util.Log;
  */
 public class GroupMessengerProvider extends ContentProvider {
 
-    //instantiating your subclass of SQLiteOpenHelper:
+    //https://developer.android.com/training/data-storage/sqlite.html
+    //instantiating subclass of SQLiteOpenHelper:
     KeyValueTableDBHelper dbHelper;
+
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
         // You do not need to implement this.
@@ -60,7 +62,8 @@ public class GroupMessengerProvider extends ContentProvider {
 
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         Log.d("insert","db created 1");
-        //https://stackoverflow.com/questions/13311727/android-sqlite-insert-or-update
+        //https://stackoverflow.com/questions/11686645/android-sqlite-insert-update-table-columns-to-keep-the-identifieradd .
+        //https://developer.android.com/training/data-storage/sqlite.html
         // Insert the new row, returning the primary key value of the new row
         long newRowId = db.insertWithOnConflict(KeyValueTableContract.KeyValueTableEntry.TABLE_NAME, null, values,SQLiteDatabase.CONFLICT_IGNORE);
 
@@ -96,10 +99,8 @@ public class GroupMessengerProvider extends ContentProvider {
          */
         Log.d("query", selection);
 
+        //https://developer.android.com/training/data-storage/sqlite.html
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-
-
-
         Cursor cursor = db.query(
                 KeyValueTableContract.KeyValueTableEntry.TABLE_NAME,   // The table to query
                 null,             // The array of columns to return (pass null to get all)
